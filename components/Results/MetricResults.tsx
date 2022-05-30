@@ -1,28 +1,31 @@
 import React, {Component} from 'react';
 import {
   Text,
-  View,
-  Pressable,
-  Alert,
-  Dimensions
+  View
 } from 'react-native';
 import styles, {Context} from '../../helpers/consts'
-import {
-    LineChart,
-    BarChart,
-    PieChart,
-    ProgressChart,
-    ContributionGraph,
-    StackedBarChart
-  } from "react-native-chart-kit";
+import { Metric } from '../../helpers/Roles';
+import { MetricTask } from '../../helpers/Tasks';
 
-export class App extends React.Component {
+type IProps = {
+  task: MetricTask
+}
+
+export class MetricResult extends React.Component<IProps> {
+    getResult() {
+        switch(this.props.route.params.task.name) {
+            case Metric.ARPU:
+                return `Средний доход = `
+            case Metric.RR:
+                return `Коэффициент удержания = `
+        }
+    }
     render() {
         return (
-            <Text>Text</Text>
+            <Text style={styles.standartText}>{this.getResult()}</Text>
         )
     }
 };
-App.contextType = Context;
+MetricResult.contextType = Context;
 
-export default App;
+export default MetricResult;

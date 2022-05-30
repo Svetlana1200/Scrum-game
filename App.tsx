@@ -69,6 +69,7 @@ interface IState {
     possibleResults: string[];
     users: {[key: string]: UsersCount};
     userStatistics: {[key: string]: number[]};
+    moneyStatistics: {[year: number]: {[month: number]: number}}
 }
 type UsersCount = {
     all: number;
@@ -107,6 +108,9 @@ export class App extends React.Component<{}, IState> {
                 [Role.LISTENER]: [30, 30, 30, 30, 30],
                 [Role.AUTHOR]: [4, 4, 4, 4, 4],
                 [Role.MODERATOR]: [9, 9, 9, 9, 9]
+            },
+            moneyStatistics: {
+
             }
         }
     }
@@ -123,7 +127,7 @@ export class App extends React.Component<{}, IState> {
             this.setState({isStart: true})
             this.timerID = setInterval(
                 () => this.tick(),
-                250
+                500
             );
         }
     }

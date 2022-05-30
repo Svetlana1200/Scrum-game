@@ -9,10 +9,7 @@ export class TaskManager {
         this.finishTasks = []
     }
     get nextId(): number {
-        if (this.tasks.length) {
-            return this.tasks[this.tasks.length - 1].id + 1
-        }
-        return this.finishTasks[this.finishTasks.length - 1].id + 1
+        return this.tasks.length + this.finishTasks.length + 1;
     }
 
     addTask(task: BaseTask) {

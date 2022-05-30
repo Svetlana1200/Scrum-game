@@ -68,7 +68,7 @@ class Tasks extends Component<IProps, IState> {
                         <Pressable onPress={() => this.toResults(task)}>
                             <Text style={styles.standartText}>Готово</Text>
                         </Pressable> :
-                        <Text style={styles.standartText}>{task.finishDate.getDate()}.{task.finishDate.getMonth()}.{task.finishDate.getFullYear()}</Text>
+                        <Text style={styles.standartText}>{task.finishDate.getDate()}.{task.finishDate.getMonth() + 1}.{task.finishDate.getFullYear()}</Text>
                 }
             </View>
         )
@@ -91,8 +91,8 @@ class Tasks extends Component<IProps, IState> {
         const {role, action, result} = this.state
         if (role && action && result) {
             const time = Math.floor(Math.random() * 3) + 1; // 1, 2 или 3 месяца
-            const coefUsers = 2//Math.random()
-            const coefIncome = 2//Math.random()
+            const coefUsers = Math.random()
+            const coefIncome = Math.random()
             const newTask: SimpleTask = new SimpleTask(this.context.taskManager.tasks.nextId, time, this.context.dateDate, role as Role, action as string, result as string, coefUsers, coefIncome)
             
             this.context.taskManager.addTask(newTask)
