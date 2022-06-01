@@ -9,7 +9,8 @@ import styles, {Context} from '../helpers/consts'
 
 interface IProps {
     navigation: {
-        navigate: Function
+        navigate: Function;
+        setOptions: Function;
     }
 }
 
@@ -22,7 +23,6 @@ export class Actions extends React.Component<IProps> {
                     <Text style={styles.standartText}>{this.context.money}$</Text>
                 </View>
                 <View style={styles.sectionContainer}>
-                    <Text style={styles.sectionTitle}>Действия</Text>
                     <Pressable style={({pressed}) => [
                                     styles.button, styles.width150,
                                     pressed ? styles.buttonBackgroundClick : styles.buttonBackground]}

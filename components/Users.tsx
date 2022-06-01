@@ -40,9 +40,9 @@ export class App extends React.Component {
                 <ScrollView>
                     <View style={styles.sectionContainer}>
                         {this.renderRow('', 'Всего', 'С подпиской')}
-                        {this.renderRow('Модераторы', this.context.users[Role.MODERATOR].all, this.context.users[Role.MODERATOR].subscription)}
-                        {this.renderRow('Слушатели', this.context.users[Role.LISTENER].all, this.context.users[Role.LISTENER].subscription)}
-                        {this.renderRow('Авторы', this.context.users[Role.AUTHOR].all, this.context.users[Role.AUTHOR].subscription)}
+                        {this.renderRow('Модераторы', this.context.users[Role.MODERATOR], this.context.users[Role.MODERATOR].subscription)}
+                        {this.renderRow('Слушатели', this.context.users[Role.LISTENER], this.context.users[Role.LISTENER].subscription)}
+                        {this.renderRow('Авторы', this.context.users[Role.AUTHOR], this.context.users[Role.AUTHOR].subscription)}
                     </View>
                     <View>
                         <UserStatistic monthesforGrafic={monthesforGrafic} role={Role.MODERATOR}/>

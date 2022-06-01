@@ -11,7 +11,7 @@ import DropDownPicker, {ValueType} from 'react-native-dropdown-picker';
 import 'react-native-gesture-handler';
 import styles, {Context} from '../helpers/consts'
 import {Role} from '../helpers/Roles'
-import { AdvertisingTask, BaseTask, MetricTask, SimpleTask } from '../helpers/Tasks';
+import { AdvertisingTask, BaseTask, MetricTask, SimpleTask, results, features } from '../helpers/Tasks';
 
 interface IProps {
     navigation: {
@@ -70,6 +70,10 @@ class Tasks extends Component<IProps, IState> {
                         </Pressable> :
                         <Text style={styles.standartText}>{task.finishDate.getDate()}.{task.finishDate.getMonth() + 1}.{task.finishDate.getFullYear()}</Text>
                 }
+                {
+                    task instanceof SimpleTask && 
+                    <Text style={[styles.standartText, styles.width]}>{task.priority}</Text>
+                }
             </View>
         )
     }
@@ -80,6 +84,7 @@ class Tasks extends Component<IProps, IState> {
                 <View style={styles.row}>
                     <Text style={[styles.standartText, styles.width]}></Text>
                     <Text style={styles.standartText}>Срок</Text>
+                    <Text style={styles.standartText}>Приоритет</Text>
                 </View>
                 {this.context.taskManager.finishTasks.map((task: BaseTask) => this.renderTask(task, true))}
                 {this.context.taskManager.tasks.map((task: BaseTask) => this.renderTask(task, false))}
@@ -91,9 +96,7 @@ class Tasks extends Component<IProps, IState> {
         const {role, action, result} = this.state
         if (role && action && result) {
             const time = Math.floor(Math.random() * 3) + 1; // 1, 2 или 3 месяца
-            const coefUsers = Math.random()
-            const coefIncome = Math.random()
-            const newTask: SimpleTask = new SimpleTask(this.context.taskManager.tasks.nextId, time, this.context.dateDate, role as Role, action as string, result as string, coefUsers, coefIncome)
+            const newTask: SimpleTask = new SimpleTask(this.context.taskManager.tasks.nextId, time, this.context.dateDate, role as Role, features[action as string], results[result as string])
             
             this.context.taskManager.addTask(newTask)
             this.setState({

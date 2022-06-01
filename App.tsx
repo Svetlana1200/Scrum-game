@@ -27,8 +27,9 @@ import AdvertisingResults from './components/Results/AdvertisingResults'
 import {Context} from './helpers/consts'
 import {Role} from './helpers/Roles'
 import { TaskManager } from './helpers/TaskManager';
-import { AdvertisingTask, BaseTask, MetricTask, SimpleTask } from './helpers/Tasks';
+import { AdvertisingTask, BaseTask, MetricTask, SimpleTask, results, features } from './helpers/Tasks';
 import { Advertising as AdvertisingType} from './helpers/Roles';
+import { Header } from './components/Header';
 
 const Stack = createStackNavigator();
 
@@ -65,15 +66,12 @@ interface IState {
     date: Date;
     dateStr: string;
     isStart: boolean;
+    isPause: boolean;
     possibleActions: string[];
     possibleResults: string[];
-    users: {[key: string]: UsersCount};
+    users: {[key: string]: number};
     userStatistics: {[key: string]: number[]};
     moneyStatistics: {[year: number]: {[month: number]: number}}
-}
-type UsersCount = {
-    all: number;
-    subscription: number;
 }
 
 export class App extends React.Component<{}, IState> {
@@ -88,8 +86,8 @@ export class App extends React.Component<{}, IState> {
     constructor(props: {}) {
         super(props)
         this.taskManager = new TaskManager([])
-        this.taskManager.addTask(new SimpleTask(1, 1, new Date(2020, 0, 1), Role.LISTENER, 'кнопку паузы', 'останавливать прослушивание музыки', 2, 2));
-        this.taskManager.addTask(new SimpleTask(2, 2, new Date(2020, 0, 1), Role.AUTHOR, 'кнопку прогресс бар', 'видеть сколько будет загружаться песня', 2, 2));
+        this.taskManager.addTask(new SimpleTask(1, 1, new Date(2020, 0, 1), Role.LISTENER, features['кнопку паузы'], results['останавливать прослушивание музыки']));
+        //this.taskManager.addTask(new SimpleTask(2, 2, new Date(2020, 0, 1), Role.AUTHOR, 'кнопку прогресс бар', 'видеть сколько будет загружаться песня'));
         //this.taskManager.addTask(new MetricTask(3, 4, new Date(2020, 0, 1), 2, Metric.ARPU));
         //this.taskManager.addTask(new MetricTask(4, 3, new Date(2020, 0, 1), 2, Metric.ARPU));
         this.state = {
@@ -97,12 +95,13 @@ export class App extends React.Component<{}, IState> {
             date: new Date(2020, 0, 1),
             dateStr: '1 Января 2020',
             isStart: false,
-            possibleActions: ['действие1', 'действие2', 'действие3'],
-            possibleResults: ['результат1', 'результат2', 'результат3'],
+            isPause: false,
+            possibleActions: ['кнопку прогресс бар', 'кнопку загрузки музыки'],
+            possibleResults: ['загружать музыку', 'видеть сколько будет загружаться песня'],
             users: {
-                [Role.LISTENER]: {all: 30, subscription: 20},
-                [Role.AUTHOR]: {all: 3, subscription: 2},
-                [Role.MODERATOR]: {all: 9, subscription: 4}
+                [Role.LISTENER]: 30,
+                [Role.AUTHOR]: 3,
+                [Role.MODERATOR]: 9
             },
             userStatistics: {
                 [Role.LISTENER]: [30, 30, 30, 30, 30],
@@ -123,13 +122,17 @@ export class App extends React.Component<{}, IState> {
         this.setState({money: money + count})
     }
     startGame = () => {
-        if (!this.state.isStart) {
-            this.setState({isStart: true})
+        if (!this.state.isStart || this.state.isPause) {
+            this.setState({isStart: true, isPause: false})
             this.timerID = setInterval(
                 () => this.tick(),
                 500
             );
         }
+    }
+    pauseGame = () => {
+        clearInterval(this.timerID)
+        this.setState({isPause: true})
     }
     tick = () => {
         const newDate = this.state.date;
@@ -146,10 +149,10 @@ export class App extends React.Component<{}, IState> {
             const task: BaseTask = this.taskManager.tasks.shift();
             if (task instanceof SimpleTask) {
                 const {users, money} = this.state;
-                const newUsers = Math.floor(users[task.role].all * task.coefUsers)
+                const newUsers = Math.floor(users[task.role] * task.coefUsers)
                 const newMoney = Math.floor(task.coefIncome * newUsers);
                 task.resultTask = {users: newUsers, money: newMoney}
-                users[task.role].all += newUsers;
+                users[task.role] += newUsers;
                 this.setState({
                     money: money + newMoney
                 })
@@ -171,7 +174,7 @@ export class App extends React.Component<{}, IState> {
                 }
                 const {users} = this.state;
                 for (const role of Object.keys(users)) {
-                    const newUsers = Math.floor(users[role as Role].all * coef);
+                    const newUsers = Math.floor(users[role as Role] * coef);
                     users[role as Role].all += newUsers;
                     task.resultTask[role as Role] = newUsers;
                 }
@@ -181,13 +184,13 @@ export class App extends React.Component<{}, IState> {
         }
         if (day === 1) {
             this.state.userStatistics[Role.LISTENER].shift();
-            this.state.userStatistics[Role.LISTENER].push(this.state.users[Role.LISTENER].all);
+            this.state.userStatistics[Role.LISTENER].push(this.state.users[Role.LISTENER]);
 
             this.state.userStatistics[Role.AUTHOR].shift();
-            this.state.userStatistics[Role.AUTHOR].push(this.state.users[Role.AUTHOR].all);
+            this.state.userStatistics[Role.AUTHOR].push(this.state.users[Role.AUTHOR]);
 
             this.state.userStatistics[Role.MODERATOR].shift();
-            this.state.userStatistics[Role.MODERATOR].push(this.state.users[Role.MODERATOR].all);
+            this.state.userStatistics[Role.MODERATOR].push(this.state.users[Role.MODERATOR]);
         }
     }
     render() {
@@ -198,65 +201,62 @@ export class App extends React.Component<{}, IState> {
                         dateDate: this.state.date,
                         date: this.state.dateStr,
                         startGame: this.startGame,
+                        pauseGame: this.pauseGame,
                         money: this.state.money,
                         changeMoney: this.changeMoney,
                         possibleActions: this.state.possibleActions,
                         possibleResults: this.state.possibleResults,
                         users: this.state.users,
-                        userStatistics: this.state.userStatistics
+                        userStatistics: this.state.userStatistics,
+                        isPause: this.state.isPause
                     }
                 }>
                 <NavigationContainer>
                     <Stack.Navigator>
                     <Stack.Screen
                         name="MainMenu"
-                        component={MainMenu}
-                        options={{ title: 'Главное меню' }}
-                    />
-                    <Stack.Screen
-                        name="Actions"
-                        component={Actions}
-                        options={{ title: 'Действия' }}
+                        component={this.state.isStart ? Actions : MainMenu}
+                        options={{ headerTitle: (props) => <Header {...props} title={this.state.isStart ? 'Действия' : 'Главное меню'} hideMenu={!this.state.isStart}/> }}
                     />
                     <Stack.Screen
                         name="Advertising"
                         component={Advertising}
-                        options={{ title: 'Реклама' }}
+                        options={{ headerTitle: (props) => <Header {...props} title="Реклама"/> }}
                     />
                     <Stack.Screen
                         name="Metrics"
                         component={Metrics}
-                        options={{ title: 'Метрики' }}
+                        options={{ headerTitle: (props) => <Header {...props} title="Метрики"/> }}
                     />
                     <Stack.Screen
                         name="Tasks"
                         component={Tasks}
-                        options={{ title: 'Задачи' }}
+                        options={{ headerTitle: (props) => <Header {...props} title="Задачи"/> }}
                     />
                     <Stack.Screen
                         name="Product"
                         component={Product}
-                        options={{ title: 'Продукт' }}
+                        options={{ headerTitle: (props) => <Header {...props} title="Продукт"/> }}
                     />
                     <Stack.Screen
                         name="Users"
                         component={Users}
-                        options={{ title: 'Пользователи' }}
+                        options={{ headerTitle: (props) => <Header {...props} title="Пользователи"/> }}
                     />
                     <Stack.Screen
                         name="MetricResults"
                         component={MetricResults}
-                        options={{ title: 'Результаты' }}
+                        options={{ headerTitle: (props) => <Header {...props} title="Результаты"/> }}
                     />
                     <Stack.Screen
                         name="SimpleResults"
                         component={SimpleResults}
-                        options={{ title: 'Результаты' }}
+                        options={{ headerTitle: (props) => <Header {...props} title="Результаты"/> }}
                     />
                     <Stack.Screen
                         name="AdvertisingResults"
                         component={AdvertisingResults}
-                        options={{ title: 'Результаты' }}
+                        options={{ headerTitle: (props) => <Header {...props} title="Результаты"/> }}
                     />
                     </Stack.Navigator>
                 </NavigationContainer>

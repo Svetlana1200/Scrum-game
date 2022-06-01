@@ -14,37 +14,25 @@ interface IProps {
 }
 
 export class App extends React.Component<IProps> {
-    constructor(props) {
-        super(props);
-        this.state = {
-            flag: false,
-            isNew: undefined
-        }
-    }
-
     render() {
-        if (this.state.flag) {
-            this.context.startGame()
-            return (<Actions navigation={this.props.navigation}/>)
-        }
         return (
         <View style={styles.sectionContainer}>
             <Text
             style={[
                 styles.sectionTitle,
             ]}>
-            Название
+            Scrum
             </Text>
             <Pressable style={({pressed}) => [
                             styles.button, styles.width150,
                             pressed ? styles.buttonBackgroundClick : styles.buttonBackground]}
-                        onPress={() => this.setState({flag: true, isNew: true})}>
+                        onPress={() => this.context.startGame()}>
                 <Text style={styles.buttonText}>Начать</Text>
             </Pressable>
             <Pressable style={({pressed}) => [
                             styles.button, styles.width150,
                             pressed ? styles.buttonBackgroundClick : styles.buttonBackground]}
-                        onPress={() => this.setState({flag: true, isNew: false})}>
+                        onPress={() => this.context.startGame()}>
                 <Text style={styles.buttonText}>Продолжить</Text>
             </Pressable>
             <Pressable style={({pressed}) => [

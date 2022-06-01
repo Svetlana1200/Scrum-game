@@ -1,9 +1,11 @@
-import {Alert, StyleSheet} from 'react-native';
+import {Alert, StyleSheet, Dimensions} from 'react-native';
 import React, {Component} from 'react';
-
 export const Context = React.createContext();
 
 const styles = StyleSheet.create( {
+    width50: {
+        width: 50
+    },
     buttonBackgroundClick: {
         backgroundColor: '#F2B9B9'
     },
@@ -144,6 +146,23 @@ const styles = StyleSheet.create( {
         flexDirection: 'row',
         justifyContent: 'space-around',
         marginBottom: 20
+    },
+    headerScreen: {
+        width: Dimensions.get("window").width - 100,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: "center",
+    },
+    headerTitle: {
+        fontSize: 18,
+        color: '#000000'
+    },
+    headerButton: {
+        alignItems: 'center',
+        justifyContent: 'space-around',
+        height: 34,
+        padding: 5,
+        width: 80
     }
 });
 
