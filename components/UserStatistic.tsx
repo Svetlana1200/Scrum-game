@@ -9,8 +9,8 @@ import {LineChart} from "react-native-chart-kit";
 import { Role } from '../helpers/Roles';
 
 interface IProps {
-    monthesforGrafic: string[];
-    role: Role;
+    numberSprints: string[];
+    values : number[];
 }
 
 export class App extends React.Component<IProps> {
@@ -18,9 +18,9 @@ export class App extends React.Component<IProps> {
         return (    
             <LineChart
                 data={{
-                    labels: this.props.monthesforGrafic,
+                    labels: this.props.numberSprints,
                     datasets: [
-                        {data: this.context.userStatistics[this.props.role]}
+                        {data: this.props.values}
                     ]
                 }}
                 width={Dimensions.get("window").width}

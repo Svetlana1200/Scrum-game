@@ -1,5 +1,5 @@
-import {Alert, StyleSheet, Dimensions} from 'react-native';
-import React, {Component} from 'react';
+import {StyleSheet, Dimensions} from 'react-native';
+import React from 'react';
 export const Context = React.createContext();
 
 const styles = StyleSheet.create( {
@@ -11,6 +11,9 @@ const styles = StyleSheet.create( {
     },
     buttonBackground: {
         backgroundColor: '#FAE4E4'
+    },
+    buttonBackgroundDisable: {
+        backgroundColor: '#b3b3b3'
     },
     container: {
         backgroundColor: '#ffffff',
@@ -52,6 +55,11 @@ const styles = StyleSheet.create( {
     },
     width90: {
         width: 90
+    },
+    width30: {
+        width: 30,
+        height: 30,
+        textAlign: 'center'
     },
     button: {
         height: 34,
@@ -122,8 +130,7 @@ const styles = StyleSheet.create( {
         backgroundColor: "grey",
         flex: 1,
         justifyContent: "center",
-        alignItems: "center",
-        marginTop: 22
+        alignItems: "center"
     },
     modalView: {
         margin: 20,
@@ -163,6 +170,10 @@ const styles = StyleSheet.create( {
         height: 34,
         padding: 5,
         width: 80
+    },
+    headerAddingTasks: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
     }
 });
 

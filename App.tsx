@@ -9,8 +9,6 @@
  */
 
 import React from 'react';
-import {Alert, useColorScheme} from 'react-native';
-import {Colors} from 'react-native/Libraries/NewAppScreen';
 import 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -20,16 +18,16 @@ import Advertising from './components/Advertising'
 import Metrics from './components/Metrics'
 import Tasks from './components/Tasks'
 import Product from './components/Product'
-import Users from './components/Users'
 import MetricResults from './components/Results/MetricResults'
 import SimpleResults from './components/Results/SimpleResults'
 import AdvertisingResults from './components/Results/AdvertisingResults'
+import Sprint from './components/Sprint';
+import Interviews from './components/Interview';
 import {Context} from './helpers/consts'
 import {Role} from './helpers/Roles'
-import { TaskManager } from './helpers/TaskManager';
-import { AdvertisingTask, BaseTask, MetricTask, SimpleTask, results, features } from './helpers/Tasks';
-import { Advertising as AdvertisingType} from './helpers/Roles';
-import { Header } from './components/Header';
+import {TaskManager} from './helpers/TaskManager';
+import {SimpleTask, results, features} from './helpers/Tasks';
+import {Header} from './components/Header';
 
 const Stack = createStackNavigator();
 
@@ -63,152 +61,122 @@ const Stack = createStackNavigator();
 
 interface IState {
     money: number;
-    date: Date;
-    dateStr: string;
     isStart: boolean;
-    isPause: boolean;
-    possibleActions: string[];
+    possibleFeatures: string[];
     possibleResults: string[];
-    users: {[key: string]: number};
-    userStatistics: {[key: string]: number[]};
-    moneyStatistics: {[year: number]: {[month: number]: number}}
+    userStatistics: number[];
+    sprint: number;
+    ARPUStatistics: number[];
+    RRStatistics: number[];
+    usersToReduce: number;
+    gameOver: boolean
 }
 
 export class App extends React.Component<{}, IState> {
-    private timerID?: Timer;
-
+    sprintCost = 1000;
     taskManager: TaskManager
-    //const isDarkMode = useColorScheme() === 'dark';
-    
-    //const backgroundStyle = {
-    //    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-    //};
     constructor(props: {}) {
         super(props)
         this.taskManager = new TaskManager([])
-        this.taskManager.addTask(new SimpleTask(1, 1, new Date(2020, 0, 1), Role.LISTENER, features['кнопку паузы'], results['останавливать прослушивание музыки']));
+        this.taskManager.addTask(new SimpleTask(1, Role.LISTENER, features['кнопку паузы'], results['останавливать прослушивание музыки']));
         //this.taskManager.addTask(new SimpleTask(2, 2, new Date(2020, 0, 1), Role.AUTHOR, 'кнопку прогресс бар', 'видеть сколько будет загружаться песня'));
         //this.taskManager.addTask(new MetricTask(3, 4, new Date(2020, 0, 1), 2, Metric.ARPU));
         //this.taskManager.addTask(new MetricTask(4, 3, new Date(2020, 0, 1), 2, Metric.ARPU));
         this.state = {
             money: 10000,
-            date: new Date(2020, 0, 1),
-            dateStr: '1 Января 2020',
             isStart: false,
-            isPause: false,
-            possibleActions: ['кнопку прогресс бар', 'кнопку загрузки музыки'],
+            possibleFeatures: ['кнопку прогресс бар', 'кнопку загрузки музыки'],
             possibleResults: ['загружать музыку', 'видеть сколько будет загружаться песня'],
-            users: {
-                [Role.LISTENER]: 30,
-                [Role.AUTHOR]: 3,
-                [Role.MODERATOR]: 9
-            },
-            userStatistics: {
-                [Role.LISTENER]: [30, 30, 30, 30, 30],
-                [Role.AUTHOR]: [4, 4, 4, 4, 4],
-                [Role.MODERATOR]: [9, 9, 9, 9, 9]
-            },
-            moneyStatistics: {
-
-            }
+            sprint: 1,
+            ARPUStatistics: [10],
+            RRStatistics: [100],
+            userStatistics: [30],
+            usersToReduce: 5,
+            gameOver: false
         }
-    }
-    componentWillUnmount() {
-        if (this.timerID) 
-            clearInterval(this.timerID);
     }
     changeMoney = (count: number) => {
         const money = this.state.money
         this.setState({money: money + count})
     }
     startGame = () => {
-        if (!this.state.isStart || this.state.isPause) {
-            this.setState({isStart: true, isPause: false})
-            this.timerID = setInterval(
-                () => this.tick(),
-                500
-            );
-        }
-    }
-    pauseGame = () => {
-        clearInterval(this.timerID)
-        this.setState({isPause: true})
-    }
-    tick = () => {
-        const newDate = this.state.date;
-        newDate.setDate(newDate.getDate() + 1);
-        const year = newDate.getFullYear();
-        const month = newDate.getMonth();
-        const monthes = ['Января', 'Февраля', 'Марта', 'Апреля', 'Мая', 'Июня', 'Июля', 'Августа', 'Сентября', 'Октября', 'Ноября', 'Декабря'];
-        const day = newDate.getDate();
         this.setState({
-            date: newDate,
-            dateStr: `${day} ${monthes[month]} ${year}`
-        });
-        while (this.taskManager.tasks[0]?.finishDate <= newDate) {
-            const task: BaseTask = this.taskManager.tasks.shift();
-            if (task instanceof SimpleTask) {
-                const {users, money} = this.state;
-                const newUsers = Math.floor(users[task.role] * task.coefUsers)
-                const newMoney = Math.floor(task.coefIncome * newUsers);
-                task.resultTask = {users: newUsers, money: newMoney}
-                users[task.role] += newUsers;
-                this.setState({
-                    money: money + newMoney
-                })
-            }
-            else if (task instanceof AdvertisingTask) {
-                let coef = 0;
-                switch(task.name) {
-                    case AdvertisingType.LITTLE:
-                        coef = Math.random();
-                        break;
-                    case AdvertisingType.MEDIUM:
-                        coef = Math.random() * 2;
-                        break;
-                    case AdvertisingType.BIG:
-                        coef = Math.random() * 3;
-                        break;
-                    default:
-                        break;
-                }
-                const {users} = this.state;
-                for (const role of Object.keys(users)) {
-                    const newUsers = Math.floor(users[role as Role] * coef);
-                    users[role as Role].all += newUsers;
-                    task.resultTask[role as Role] = newUsers;
-                }
-                
-            }
-            this.taskManager.finishTasks.push(task);
-        }
-        if (day === 1) {
-            this.state.userStatistics[Role.LISTENER].shift();
-            this.state.userStatistics[Role.LISTENER].push(this.state.users[Role.LISTENER]);
-
-            this.state.userStatistics[Role.AUTHOR].shift();
-            this.state.userStatistics[Role.AUTHOR].push(this.state.users[Role.AUTHOR]);
-
-            this.state.userStatistics[Role.MODERATOR].shift();
-            this.state.userStatistics[Role.MODERATOR].push(this.state.users[Role.MODERATOR]);
-        }
+            isStart: true,
+            gameOver: false,
+            money: 3000,
+            possibleFeatures: ['кнопку прогресс бар', 'кнопку загрузки музыки'],
+            possibleResults: ['загружать музыку', 'видеть сколько будет загружаться песня'],
+            sprint: 1,
+            ARPUStatistics: [10],
+            RRStatistics: [100],
+            userStatistics: [30],
+            usersToReduce: 5
+        })
     }
+    startSprint = () => {
+        const {diffProfitARPU, diffProfitUsers, RR, countNewFeatures, countNewResults} = this.taskManager.executeSprint();
+        let statistics = this.state.ARPUStatistics;
+        this.state.ARPUStatistics.push(statistics[statistics.length - 1] + diffProfitARPU);
+        const currentARPU = statistics[statistics.length - 1];
+
+        statistics = this.state.userStatistics;
+        this.state.userStatistics.push(Math.max(statistics[statistics.length - 1] + diffProfitUsers - this.state.usersToReduce, 0));
+        const currentUsers = statistics[statistics.length - 1]
+
+        statistics = this.state.RRStatistics;
+        if (RR) {
+            const userStatistics = this.state.userStatistics;
+            this.state.RRStatistics.push((userStatistics[userStatistics.length - 1] - diffProfitUsers) / userStatistics[userStatistics.length - 2] * 100);
+        }
+        else
+            this.state.RRStatistics.push(statistics[statistics.length - 1]);
+
+        for (let i = 0; i < countNewFeatures; i++) {
+            const unknowFeatures = Object.keys(features).filter(x => !this.state.possibleFeatures.includes(x))
+            const indexNewFeature = Math.floor(Math.random() * unknowFeatures.length);
+            this.state.possibleFeatures.push(unknowFeatures[indexNewFeature])
+        }
+        for (let i = 0; i < countNewResults; i++) {
+            const unknowResults = Object.keys(results).filter(x => !this.state.possibleResults.includes(x))
+            const indexNewResult = Math.floor(Math.random() * unknowResults.length);
+            this.state.possibleResults.push(unknowResults[indexNewResult])
+        }
+        
+        const currentMoney = this.state.money + currentARPU * currentUsers - this.sprintCost;
+        this.setState((state) => {
+            return {
+                sprint: state.sprint + 1,
+                money: currentMoney,
+                usersToReduce: state.usersToReduce + 5,
+                gameOver: currentMoney < 0
+            }
+        })
+    }
+    removeSelectedFeatureAndResult = (feature: string, result: string) => {
+        const indexFeature = this.state.possibleFeatures.indexOf(feature);
+        this.state.possibleFeatures.splice(indexFeature, 1)
+
+        const indexResult = this.state.possibleResults.indexOf(result);
+        this.state.possibleResults.splice(indexResult, 1)
+    }
+
     render() {
         return (
             <Context.Provider value= {
                     {
                         taskManager: this.taskManager,
-                        dateDate: this.state.date,
-                        date: this.state.dateStr,
                         startGame: this.startGame,
-                        pauseGame: this.pauseGame,
                         money: this.state.money,
                         changeMoney: this.changeMoney,
-                        possibleActions: this.state.possibleActions,
+                        possibleFeatures: this.state.possibleFeatures,
                         possibleResults: this.state.possibleResults,
-                        users: this.state.users,
                         userStatistics: this.state.userStatistics,
-                        isPause: this.state.isPause
+                        ARPUStatistics: this.state.ARPUStatistics,
+                        RRStatistics: this.state.RRStatistics,
+                        startSprint: this.startSprint,
+                        sprint: this.state.sprint,
+                        gameOver: this.state.gameOver,
+                        removeSelectedFeatureAndResult: this.removeSelectedFeatureAndResult
                     }
                 }>
                 <NavigationContainer>
@@ -229,6 +197,11 @@ export class App extends React.Component<{}, IState> {
                         options={{ headerTitle: (props) => <Header {...props} title="Метрики"/> }}
                     />
                     <Stack.Screen
+                        name="Interviews"
+                        component={Interviews}
+                        options={{ headerTitle: (props) => <Header {...props} title="Опросы"/> }}
+                    />
+                    <Stack.Screen
                         name="Tasks"
                         component={Tasks}
                         options={{ headerTitle: (props) => <Header {...props} title="Задачи"/> }}
@@ -239,9 +212,8 @@ export class App extends React.Component<{}, IState> {
                         options={{ headerTitle: (props) => <Header {...props} title="Продукт"/> }}
                     />
                     <Stack.Screen
-                        name="Users"
-                        component={Users}
-                        options={{ headerTitle: (props) => <Header {...props} title="Пользователи"/> }}
+                        name="Sprint"
+                        component={Sprint}
                     />
                     <Stack.Screen
                         name="MetricResults"

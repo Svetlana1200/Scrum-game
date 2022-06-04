@@ -4,7 +4,6 @@ import {
     View,
     Pressable
 } from 'react-native';
-import Actions from './Actions'
 import styles, {Context} from '../helpers/consts'
 
 interface IProps {

@@ -1,49 +1,115 @@
-import {BaseTask} from './Tasks'
+import { Advertising, Metric, Role, Status } from './Roles';
+import {AdvertisingTask, BaseTask, InterviewTask, MetricTask, SimpleTask} from './Tasks'
 
 export class TaskManager {
-    tasks: BaseTask[];
-    finishTasks: BaseTask[];
+    tasks: BaseTask[]; // задачи в бэклоге продукта
+    prevSprintTasks: BaseTask[] = []; // задачи предыдущего спринта
+    nextSprintTasks: BaseTask[] = []; // задачи следующего спринта
 
     constructor(tasks: BaseTask[]) {
         this.tasks = tasks;
-        this.finishTasks = []
-    }
-    get nextId(): number {
-        return this.tasks.length + this.finishTasks.length + 1;
     }
 
+    get nextId(): number {
+        return this.tasks.length + 1;
+    }
+    // добавление новой задачи
     addTask(task: BaseTask) {
-        const index = this.tasks.findIndex((elemet) => {
-            return task.finishDate <= elemet.finishDate;
-        });
-        if (index === -1) {
-            this.tasks.push(task);
-        }
-        else {
-            this.tasks.splice(index, 0, task);
-        }
-        /*if (this.tasks.length === 0) {
-            this.tasks.push(task);
-        }
-        else {
-            let isPushed = false;
-            let begin = 0;
-            let end = this.tasks.length - 1;
-            let centre = Math.floor((end - begin) / 2);
-            while ((this.tasks[centre].finishDate != task.finishDate) && (begin < end)) {
-                if (this.tasks[centre].finishDate < task.finishDate) {
-                    begin = centre + 1;
+        this.tasks.unshift(task);
+    }
+    // добавление задачи в спринт
+    addToSprint(task: SimpleTask) {
+        this.nextSprintTasks.push(task)
+    }
+    //удалении задачи из спринта
+    removeFromSprint(task: SimpleTask) {
+        let i = 0;
+        this.nextSprintTasks.forEach((item, index) => {
+            if (item.id === task.id) {
+                i = index;
+            }
+        })
+        this.nextSprintTasks.splice(i, 1)
+    }
+    getAddedSP() {
+        let addedSP = 0;
+        this.nextSprintTasks.forEach((task) => {
+            if (task.status === Status.STARTED && task instanceof SimpleTask)
+                addedSP += Math.ceil(task.measuredCost / 2)
+            else
+                addedSP += task.measuredCost
+        })
+        return addedSP
+    }
+    // выполнить спринта
+    executeSprint() {
+        this.prevSprintTasks = this.nextSprintTasks;
+        this.nextSprintTasks = [];
+
+        let sp = 10;
+        let i = 0;
+        let diffProfitARPU = 0;
+        let addARPU = false;
+        let diffProfitUsers = 0;
+        let RR = false;
+        let countNewResults = 0;
+        let countNewFeatures = 0;
+
+        while (sp > 0 && i < this.prevSprintTasks.length) {
+            const task = this.prevSprintTasks[i];
+            if (task.status === Status.STARTED)
+                sp -= Math.ceil(task.realCost / 2)
+            else
+                sp -= task.realCost
+            if (task instanceof SimpleTask) {
+                if (Math.floor(Math.random() * 100) + 1 < task.probabilityCompletion) {
+                    task.status = Status.COMPLETED;
+                    diffProfitARPU += task.profitARPU;
+                    diffProfitUsers += task.profitUsers;
+                }
+                else
+                    task.status = Status.STARTED
+                task.inCurrentSprint = false
+            }
+            else if (task instanceof MetricTask) {
+                task.status = Status.COMPLETED;
+                if (task.name === Metric.ARPU)
+                    addARPU = true;
+                else if (task.name === Metric.RR) 
+                    RR = true
+                task.inCurrentSprint = false
+            }
+            else if (task instanceof InterviewTask) {
+                task.status = Status.COMPLETED;
+                countNewResults = task.countNewResults
+                countNewFeatures = task.countNewFeatures
+                task.inCurrentSprint = false
+            }
+            else if (task instanceof AdvertisingTask) {
+                task.estimatingSprint --;
+                if (task.estimatingSprint) {
+                    task.status = Status.STARTED
+                    this.nextSprintTasks.push(task)
                 }
                 else {
-                    end = centre - 1;
+                    task.status = Status.COMPLETED;
+                    task.inCurrentSprint = false;
+                    diffProfitUsers += task.profitUsers;
                 }
-                centre = Math.floor((end - begin) / 2);
             }
+            i++
+        }
+        for (i; i < this.prevSprintTasks.length; i++) {
+            diffProfitUsers -= 1
+            this.prevSprintTasks[i].inCurrentSprint = false
+        }
 
-            if (end - begin === 0) {
-                this.tasks.splice(centre, 0, task);
-                isPushed = true;
-            }
-        }*/
+        return {
+            diffProfitARPU: addARPU ? diffProfitARPU : 0,
+            diffProfitUsers: diffProfitUsers,
+            RR: RR,
+            countNewResults: countNewResults,
+            countNewFeatures: countNewFeatures
+        }
     }
 }

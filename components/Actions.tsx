@@ -19,7 +19,7 @@ export class Actions extends React.Component<IProps> {
         return (
             <View style={styles.container}>
                 <View style={styles.header}>
-                    <Text style={styles.standartText}>{this.context.date}</Text>
+                    <Text style={styles.standartText}>Спринт №{this.context.sprint}</Text>
                     <Text style={styles.standartText}>{this.context.money}$</Text>
                 </View>
                 <View style={styles.sectionContainer}>
@@ -38,7 +38,7 @@ export class Actions extends React.Component<IProps> {
                     <Pressable style={({pressed}) => [
                                     styles.button, styles.width150,
                                     pressed ? styles.buttonBackgroundClick : styles.buttonBackground]}
-                                onPress={() => Alert.alert('Cannot press this one')}>
+                                onPress={() => this.props.navigation.navigate('Interviews')}>
                         <Text style={styles.buttonText}>Провести опрос</Text>
                     </Pressable>
                     <Pressable style={({pressed}) => [

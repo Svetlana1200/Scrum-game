@@ -14,3 +14,14 @@ export enum Advertising {
     MEDIUM = 'средняя',
     LITTLE = 'маленькая'
 }
+
+export enum Interview {
+    STANDARD = 'стандратный'
+}
+
+export enum Status {
+    NEW = 'Не начата',
+    STARTED = 'Начата',
+    PLANING = 'Планируется',
+    COMPLETED = 'Готово'
+}

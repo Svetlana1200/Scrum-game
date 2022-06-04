@@ -10,8 +10,10 @@ import DropDownPicker, {ValueType} from 'react-native-dropdown-picker';
 
 import 'react-native-gesture-handler';
 import styles, {Context} from '../helpers/consts'
-import {Role} from '../helpers/Roles'
+import {Role, Status} from '../helpers/Roles'
 import { AdvertisingTask, BaseTask, MetricTask, SimpleTask, results, features } from '../helpers/Tasks';
+import { AddingTask } from './AddingTask';
+import GameOverModal from './GameOverModal';
 
 interface IProps {
     navigation: {
@@ -21,29 +23,16 @@ interface IProps {
 
 interface IState {
     modalVisible: boolean;
-    role: ValueType|null;
-    action: ValueType|null;
-    result: ValueType|null;
-    openRole: boolean;
-    openAction: boolean;
-    openResult: boolean;
-    hasError: boolean;
+    rerenderFlag: boolean;
 }
 
 class Tasks extends Component<IProps, IState> {
     tasks: BaseTask[] = [];
-    finishTasks: BaseTask[] = [];
     constructor(props: IProps) {
         super(props);
         this.state = {
-            modalVisible: false,
-            role: null,
-            action: null,
-            result: null,
-            openRole: false,
-            openAction: false,
-            openResult: false,
-            hasError: false,
+            rerenderFlag: true,
+            modalVisible: false
         }
     }
 
@@ -59,20 +48,49 @@ class Tasks extends Component<IProps, IState> {
         }
     }
 
-    renderTask(task: BaseTask, isFinish: boolean) {
+    addAndRemoveToSprint(task: BaseTask) {
+        if (task.inCurrentSprint) {
+            this.context.taskManager.removeFromSprint(task)
+        }
+        else {
+            this.context.taskManager.addToSprint(task)
+        }
+        task.inCurrentSprint = !task.inCurrentSprint
+        this.setState({rerenderFlag: !this.state.rerenderFlag})
+    }
+
+    _getSP(task: BaseTask) {
+        if (task.status === Status.STARTED && !(task instanceof AdvertisingTask)) {
+            return Math.ceil(task.measuredCost / 2)
+        }
+        if (task.status === Status.COMPLETED) {
+            return task.realCost
+        }
+        return task.measuredCost
+    }
+
+    renderTask(task: BaseTask) {
         return (
             <View key={task.id} style={[styles.row, styles.border]}>
                 <Text style={[styles.standartText, styles.width]}>{task.description}</Text>
+                <Text style={[styles.standartText, styles.width50]}>{task.status}</Text>
+                <Text style={[styles.standartText, styles.width30]}>{this._getSP(task)}</Text>
+                <Text style={[styles.standartText, styles.width50]}>{task.status === Status.COMPLETED ? task?.profitUsers || '-' : '-'}</Text>
                 {
-                    isFinish ?
-                        <Pressable onPress={() => this.toResults(task)}>
-                            <Text style={styles.standartText}>Готово</Text>
-                        </Pressable> :
-                        <Text style={styles.standartText}>{task.finishDate.getDate()}.{task.finishDate.getMonth() + 1}.{task.finishDate.getFullYear()}</Text>
-                }
-                {
-                    task instanceof SimpleTask && 
-                    <Text style={[styles.standartText, styles.width]}>{task.priority}</Text>
+                    task.status !== Status.COMPLETED &&
+                        <Pressable style={({pressed}) => [
+                                        styles.button, styles.width30,
+                                        pressed ? styles.buttonBackgroundClick : (
+                                            task.status === Status.STARTED && !task.canRemove ? styles.buttonBackgroundDisable : styles.buttonBackground)
+                                    ]}
+                                    onPress={() => this.addAndRemoveToSprint(task)}
+                                    disabled={task.status === Status.STARTED && !task.canRemove}>
+                                        {
+                                            task.inCurrentSprint ? 
+                                                <Text style={styles.standartText}>-</Text>:
+                                                <Text style={styles.standartText}>+</Text>
+                                        }
+                        </Pressable>
                 }
             </View>
         )
@@ -83,158 +101,48 @@ class Tasks extends Component<IProps, IState> {
             <ScrollView>
                 <View style={styles.row}>
                     <Text style={[styles.standartText, styles.width]}></Text>
-                    <Text style={styles.standartText}>Срок</Text>
-                    <Text style={styles.standartText}>Приоритет</Text>
+                    <Text style={[styles.standartText, styles.width50]}>Статус</Text>
+                    <Text style={[styles.standartText, styles.width30]}>sp</Text>
+                    <View>
+                        <Text style={[styles.standartText, styles.width50]}>нов.</Text>
+                        <Text style={[styles.standartText, styles.width50]}>польз.</Text>
+                    </View>
+                    <Text style={[styles.standartText, styles.width30]}></Text>
                 </View>
-                {this.context.taskManager.finishTasks.map((task: BaseTask) => this.renderTask(task, true))}
-                {this.context.taskManager.tasks.map((task: BaseTask) => this.renderTask(task, false))}
+                {this.context.taskManager.tasks.map((task: BaseTask) => this.renderTask(task))}
             </ScrollView>
         )
-    }
-
-    addTask = () => {
-        const {role, action, result} = this.state
-        if (role && action && result) {
-            const time = Math.floor(Math.random() * 3) + 1; // 1, 2 или 3 месяца
-            const newTask: SimpleTask = new SimpleTask(this.context.taskManager.tasks.nextId, time, this.context.dateDate, role as Role, features[action as string], results[result as string])
-            
-            this.context.taskManager.addTask(newTask)
-            this.setState({
-                modalVisible: false,
-                role: null,
-                action: null,
-                result: null,
-                openRole: false,
-                openAction: false,
-                openResult: false,
-                hasError: false
-            })
-        }
-        else {
-            this.setState({
-                hasError: true
-            })
-        }
-    }
-
-    getItems(array: string[]) {
-        const items: object[] = [];
-        array.forEach((item) => {
-            items.push({label: item, value: item})
-        })
-        return items
     }
 
     render() {
         return (
             <View style={styles.container}>
+                <GameOverModal navigation={this.props.navigation}/>
                 <View style={styles.header}>
-                    <Text style={styles.standartText}>{this.context.date}</Text>
+                    <Text style={styles.standartText}>Спринт №{this.context.sprint}</Text>
                     <Text style={styles.standartText}>{this.context.money}$</Text>
                 </View>    
                 <View style={styles.sectionContainer}>
-                    <Modal
-                        animationType="slide"
-                        transparent={true}
-                        visible={this.state.modalVisible}
-                        onRequestClose={() => {
-                            this.setState({modalVisible: false})
-                        }}
-                    >
-                        <View style={styles.centeredView}>
-                            <View style={styles.modalView}>
-                                <Text style={styles.sectionTitle}>Новая задача</Text>
-                                <Pressable
-                                    style={[]}
-                                    onPress={() => this.setState({modalVisible: false})}
-                                    >
-                                    <Text style={styles.standartText}>Закрыть</Text>
-                                </Pressable>
-                                <View style={styles.stringBlock}>
-                                    <Text style={[styles.standartText, styles.itemBlock]}>Как</Text>
-                                    <DropDownPicker
-                                        containerStyle={[styles.roleSelector, styles.itemBlock]}
-                                        zIndex={3000}
-                                        zIndexInverse={1000}
-                                        open={this.state.openRole}
-                                        value={this.state.role}
-                                        items={[
-                                            {label: 'модератор', value: Role.MODERATOR},
-                                            {label: 'слушатель', value: Role.LISTENER},
-                                            {label: 'автор', value: Role.AUTHOR}
-                                        ]}
-                                        setOpen={() => this.setState({
-                                            openRole: !this.state.openRole,
-                                            openAction: false,
-                                            openResult: false
-                                        })}
-                                        setValue={(callback) => {
-                                            this.setState(state => ({
-                                                role: callback(state.role)
-                                            }));
-                                        }}
-                                    />
-                                    <Text style={styles.standartText}>, я хочу</Text>
-                                </View>
-                                <View style={styles.stringBlock}>
-                                    <DropDownPicker
-                                        containerStyle={[styles.itemBlock]}
-                                        zIndex={2000}
-                                        zIndexInverse={2000}
-                                        open={this.state.openAction}
-                                        value={this.state.action}
-                                        items={this.getItems(this.context.possibleActions)}
-                                        setOpen={() => this.setState({
-                                            openAction: !this.state.openAction,
-                                            openResult: false,
-                                            openRole: false
-                                        })}
-                                        setValue={(callback) => {
-                                            this.setState(state => ({
-                                                action: callback(state.action)
-                                            }));
-                                        }}
-                                    />
-                                    <Text style={styles.standartText}>,</Text>
-                                </View>
-                                <View style={styles.stringBlock}>
-                                    <Text style={styles.standartText}>чтобы</Text>
-                                </View>
-                                <View style={styles.stringBlock}>
-                                    <DropDownPicker
-                                        zIndex={1000}
-                                        zIndexInverse={3000}
-                                        open={this.state.openResult}
-                                        value={this.state.result}
-                                        items={this.getItems(this.context.possibleResults)}
-                                        setOpen={() => this.setState({
-                                            openResult: !this.state.openResult,
-                                            openAction: false,
-                                            openRole: false
-                                        })}
-                                        setValue={(callback) => {
-                                            this.setState(state => ({
-                                                result: callback(state.result)
-                                            }));
-                                        }}
-                                    />
-                                </View>
-                                <Pressable style={({pressed}) => [
-                                                styles.button, styles.width300,
-                                                pressed ? styles.buttonBackgroundClick : styles.buttonBackground]}
-                                            onPress={this.addTask}>
-                                    <Text style={styles.buttonText}>Добавить</Text>
-                                </Pressable>
-                                {this.state.hasError && <Text style={styles.errorText}>Нужно заполнить все поля</Text>}
-                            </View>
-                        </View>
-                    </Modal>
+                    <AddingTask closeModal={() => this.setState({modalVisible: false})} modalVisible={this.state.modalVisible}/>
+                    <Pressable style={({pressed}) => [
+                                    styles.button, styles.width300,
+                                    pressed ? styles.buttonBackgroundClick : styles.buttonBackground]}
+                                onPress={() => this.props.navigation.navigate('Sprint', {isNext: false})}>
+                        <Text style={styles.buttonText}>Предыдущий спринт</Text>
+                    </Pressable>
+                    <Pressable style={({pressed}) => [
+                                    styles.button, styles.width300,
+                                    pressed ? styles.buttonBackgroundClick : styles.buttonBackground]}
+                                onPress={() => this.props.navigation.navigate('Sprint', {isNext: true})}>
+                        <Text style={styles.buttonText}>Следующий спринт</Text>
+                    </Pressable>
                     <Pressable style={({pressed}) => [
                                     styles.button, styles.width300,
                                     pressed ? styles.buttonBackgroundClick : styles.buttonBackground]}
                                 onPress={() => this.setState({modalVisible: true})}>
                         <Text style={styles.buttonText}>Добавить задачу</Text>
                     </Pressable>
+                    <Text style={styles.standartText}>Добавлено на {this.context.taskManager.getAddedSP()} sp</Text> 
                     {this.renderTasks()}
                 </View>
             </View>

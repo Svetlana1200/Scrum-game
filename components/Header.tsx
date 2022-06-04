@@ -16,17 +16,6 @@ export class Header extends React.Component<IProps> {
         return (
             <View style={[styles.headerScreen]}>
                 <Text style={styles.headerTitle}>{this.props.title}</Text>
-                {
-                    !this.props.hideMenu &&
-                    <Pressable style={({pressed}) => [
-                                        styles.headerButton,
-                                        pressed ? styles.buttonBackgroundClick : styles.buttonBackground]}
-                                onPress={() => {
-                                    this.context.isPause ? this.context.startGame() : this.context.pauseGame()
-                                }}>
-                        <Text style={styles.headerTitle}>{this.context.isPause ? 'Пуск' : 'Пауза'}</Text>
-                    </Pressable>
-                }
             </View>
         )
     }
