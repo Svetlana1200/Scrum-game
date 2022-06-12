@@ -18,15 +18,12 @@ import Advertising from './components/Advertising'
 import Metrics from './components/Metrics'
 import Tasks from './components/Tasks'
 import Product from './components/Product'
-import MetricResults from './components/Results/MetricResults'
-import SimpleResults from './components/Results/SimpleResults'
-import AdvertisingResults from './components/Results/AdvertisingResults'
 import Sprint from './components/Sprint';
 import Interviews from './components/Interview';
 import {Context} from './helpers/consts'
-import {Role} from './helpers/Roles'
+import {Metric, Role, Advertising as AdvertisingType} from './helpers/Roles'
 import {TaskManager} from './helpers/TaskManager';
-import {SimpleTask, results, features} from './helpers/Tasks';
+import {SimpleTask, results, features, BaseTask, MetricTask, AdvertisingTask, InterviewTask} from './helpers/Tasks';
 import {Header} from './components/Header';
 
 const Stack = createStackNavigator();
@@ -59,7 +56,16 @@ const Stack = createStackNavigator();
   );
 };*/
 
-interface IState {
+interface IFlagsAddedTask {
+    addedMetricARPU: boolean;
+    addedMetricRR: boolean;
+    addedInterview: boolean;
+    addedAdvertisingBig: boolean;
+    addedAdvertisingMedium: boolean;
+    addedAdvertisingLittle: boolean;
+}
+
+type IState = IFlagsAddedTask & {
     money: number;
     isStart: boolean;
     possibleFeatures: string[];
@@ -69,7 +75,8 @@ interface IState {
     ARPUStatistics: number[];
     RRStatistics: number[];
     usersToReduce: number;
-    gameOver: boolean
+    gameOver: boolean;
+    visibleRules: boolean;
 }
 
 export class App extends React.Component<{}, IState> {
@@ -92,29 +99,43 @@ export class App extends React.Component<{}, IState> {
             RRStatistics: [100],
             userStatistics: [30],
             usersToReduce: 5,
-            gameOver: false
+            gameOver: false,
+            visibleRules: false,
+
+            addedMetricARPU: false,
+            addedMetricRR: false,
+            addedInterview: false,
+            addedAdvertisingBig: false,
+            addedAdvertisingMedium: false,
+            addedAdvertisingLittle: false
         }
     }
-    changeMoney = (count: number) => {
-        const money = this.state.money
-        this.setState({money: money + count})
-    }
     startGame = () => {
+        this.taskManager = new TaskManager([]);
+        this.taskManager.addTask(new SimpleTask(1, Role.LISTENER, features['кнопку паузы'], results['останавливать прослушивание музыки']));
         this.setState({
             isStart: true,
             gameOver: false,
+            visibleRules: false,
             money: 3000,
-            possibleFeatures: ['кнопку прогресс бар', 'кнопку загрузки музыки'],
+            possibleFeatures: ['прогресс бар', 'кнопку загрузки музыки'],
             possibleResults: ['загружать музыку', 'видеть сколько будет загружаться песня'],
             sprint: 1,
             ARPUStatistics: [10],
             RRStatistics: [100],
             userStatistics: [30],
-            usersToReduce: 5
+            usersToReduce: 5,
+            
+            addedMetricARPU: false,
+            addedMetricRR: false,
+            addedInterview: false,
+            addedAdvertisingBig: false,
+            addedAdvertisingMedium: false,
+            addedAdvertisingLittle: false
         })
     }
     startSprint = () => {
-        const {diffProfitARPU, diffProfitUsers, RR, countNewFeatures, countNewResults} = this.taskManager.executeSprint();
+        const {diffProfitARPU, diffProfitUsers, RR, countNewFeatures, countNewResults, cost, addedTaskFlags} = this.taskManager.executeSprint();
         let statistics = this.state.ARPUStatistics;
         this.state.ARPUStatistics.push(statistics[statistics.length - 1] + diffProfitARPU);
         const currentARPU = statistics[statistics.length - 1];
@@ -133,22 +154,27 @@ export class App extends React.Component<{}, IState> {
 
         for (let i = 0; i < countNewFeatures; i++) {
             const unknowFeatures = Object.keys(features).filter(x => !this.state.possibleFeatures.includes(x))
-            const indexNewFeature = Math.floor(Math.random() * unknowFeatures.length);
-            this.state.possibleFeatures.push(unknowFeatures[indexNewFeature])
+            if (unknowFeatures.length) {
+                const indexNewFeature = Math.floor(Math.random() * unknowFeatures.length);
+                this.state.possibleFeatures.push(unknowFeatures[indexNewFeature])
+            }
         }
         for (let i = 0; i < countNewResults; i++) {
             const unknowResults = Object.keys(results).filter(x => !this.state.possibleResults.includes(x))
-            const indexNewResult = Math.floor(Math.random() * unknowResults.length);
-            this.state.possibleResults.push(unknowResults[indexNewResult])
+            if (unknowResults.length) {
+                const indexNewResult = Math.floor(Math.random() * unknowResults.length);
+                this.state.possibleResults.push(unknowResults[indexNewResult])
+            }
         }
         
-        const currentMoney = this.state.money + currentARPU * currentUsers - this.sprintCost;
+        const currentMoney = this.state.money + currentARPU * currentUsers - this.sprintCost - cost;
         this.setState((state) => {
             return {
                 sprint: state.sprint + 1,
                 money: currentMoney,
                 usersToReduce: state.usersToReduce + 5,
-                gameOver: currentMoney < 0
+                gameOver: currentMoney < 0,
+                ...addedTaskFlags
             }
         })
     }
@@ -160,76 +186,87 @@ export class App extends React.Component<{}, IState> {
         this.state.possibleResults.splice(indexResult, 1)
     }
 
+    addTask = (task: BaseTask) => {
+        if (task instanceof MetricTask) {
+            if (task.name === Metric.ARPU) 
+                this.setState({addedMetricARPU: true})
+            else if (task.name === Metric.RR) 
+                this.setState({addedMetricRR: true})
+        }
+        if (task instanceof AdvertisingTask) {
+            if (task.size === AdvertisingType.BIG) 
+                this.setState({addedAdvertisingBig: true})
+            else if (task.size === AdvertisingType.MEDIUM) 
+                this.setState({addedAdvertisingMedium: true})
+            else if (task.size === AdvertisingType.LITTLE) 
+                this.setState({addedAdvertisingLittle: true})
+        }
+        if (task instanceof InterviewTask) {
+            this.setState({addedInterview: true})
+        }
+    }
+    changeVisible = (visible: boolean) => {
+        this.setState({visibleRules: visible})
+    }
+
     render() {
         return (
             <Context.Provider value= {
                     {
                         taskManager: this.taskManager,
+                        sprintCost: this.sprintCost,
                         startGame: this.startGame,
-                        money: this.state.money,
-                        changeMoney: this.changeMoney,
-                        possibleFeatures: this.state.possibleFeatures,
-                        possibleResults: this.state.possibleResults,
-                        userStatistics: this.state.userStatistics,
-                        ARPUStatistics: this.state.ARPUStatistics,
-                        RRStatistics: this.state.RRStatistics,
                         startSprint: this.startSprint,
-                        sprint: this.state.sprint,
-                        gameOver: this.state.gameOver,
-                        removeSelectedFeatureAndResult: this.removeSelectedFeatureAndResult
+                        removeSelectedFeatureAndResult: this.removeSelectedFeatureAndResult,
+                        addTask: this.addTask,
+                        changeVisible: this.changeVisible,
+                        ...this.state
                     }
                 }>
                 <NavigationContainer>
                     <Stack.Navigator>
-                    <Stack.Screen
-                        name="MainMenu"
-                        component={this.state.isStart ? Actions : MainMenu}
-                        options={{ headerTitle: (props) => <Header {...props} title={this.state.isStart ? 'Действия' : 'Главное меню'} hideMenu={!this.state.isStart}/> }}
-                    />
-                    <Stack.Screen
-                        name="Advertising"
-                        component={Advertising}
-                        options={{ headerTitle: (props) => <Header {...props} title="Реклама"/> }}
-                    />
-                    <Stack.Screen
-                        name="Metrics"
-                        component={Metrics}
-                        options={{ headerTitle: (props) => <Header {...props} title="Метрики"/> }}
-                    />
-                    <Stack.Screen
-                        name="Interviews"
-                        component={Interviews}
-                        options={{ headerTitle: (props) => <Header {...props} title="Опросы"/> }}
-                    />
-                    <Stack.Screen
-                        name="Tasks"
-                        component={Tasks}
-                        options={{ headerTitle: (props) => <Header {...props} title="Задачи"/> }}
-                    />
-                    <Stack.Screen
-                        name="Product"
-                        component={Product}
-                        options={{ headerTitle: (props) => <Header {...props} title="Продукт"/> }}
-                    />
-                    <Stack.Screen
-                        name="Sprint"
-                        component={Sprint}
-                    />
-                    <Stack.Screen
-                        name="MetricResults"
-                        component={MetricResults}
-                        options={{ headerTitle: (props) => <Header {...props} title="Результаты"/> }}
-                    />
-                    <Stack.Screen
-                        name="SimpleResults"
-                        component={SimpleResults}
-                        options={{ headerTitle: (props) => <Header {...props} title="Результаты"/> }}
-                    />
-                    <Stack.Screen
-                        name="AdvertisingResults"
-                        component={AdvertisingResults}
-                        options={{ headerTitle: (props) => <Header {...props} title="Результаты"/> }}
-                    />
+                        <Stack.Screen
+                            name="MainMenu"
+                            component={this.state.isStart ? Actions : MainMenu}
+                            options={{
+                                headerTitle: (props) =>
+                                    <Header
+                                        {...props} 
+                                        title={this.state.isStart ? 'Действия' : 'Главное меню'}
+                                        hideMenu={!this.state.isStart}
+                                    />,
+                                    headerTitleStyle: { flex: 1}
+                                }}
+                        />
+                        <Stack.Screen
+                            name="Advertising"
+                            component={Advertising}
+                            options={{ headerTitle: (props) => <Header {...props} title="Реклама"/> }}
+                        />
+                        <Stack.Screen
+                            name="Metrics"
+                            component={Metrics}
+                            options={{ headerTitle: (props) => <Header {...props} title="Метрики"/> }}
+                        />
+                        <Stack.Screen
+                            name="Interviews"
+                            component={Interviews}
+                            options={{ headerTitle: (props) => <Header {...props} title="Опросы"/> }}
+                        />
+                        <Stack.Screen
+                            name="Tasks"
+                            component={Tasks}
+                            options={{ headerTitle: (props) => <Header {...props} title="Задачи"/> }}
+                        />
+                        <Stack.Screen
+                            name="Product"
+                            component={Product}
+                            options={{ headerTitle: (props) => <Header {...props} title="Продукт"/> }}
+                        />
+                        <Stack.Screen
+                            name="Sprint"
+                            component={Sprint}
+                        />
                     </Stack.Navigator>
                 </NavigationContainer>
             </Context.Provider>

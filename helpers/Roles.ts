@@ -16,12 +16,11 @@ export enum Advertising {
 }
 
 export enum Interview {
-    STANDARD = 'стандратный'
+    STANDARD = 'стандартный'
 }
 
 export enum Status {
     NEW = 'Не начата',
     STARTED = 'Начата',
-    PLANING = 'Планируется',
     COMPLETED = 'Готово'
 }

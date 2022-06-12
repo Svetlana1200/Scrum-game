@@ -94,6 +94,7 @@ export class AddingTask extends Component<IProps, IState> {
                                 <Text style={styles.standartText}>X</Text>
                             </Pressable>
                         </View>
+                        <Text style={[styles.standartText]}>Для получения новых вариантов выбора необходимо проводить опросы</Text>
                         <View style={styles.stringBlock}>
                             <Text style={[styles.standartText, styles.itemBlock]}>Как</Text>
                             <DropDownPicker

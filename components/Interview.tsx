@@ -12,24 +12,23 @@ import { Interview, Metric } from '../helpers/Roles';
 import { InterviewTask, MetricTask } from '../helpers/Tasks';
 
 class Interviews extends Component {
-    interview = {
-        [Interview.STANDARD]: 100
-    }
-
     addMetric = (name: Interview) => {
-        this.context.changeMoney(-this.interview[name]);
         const task = new InterviewTask(this.context.taskManager.nextId, name)
-        this.context.taskManager.addTask(task)
+        this.context.taskManager.addTask(task);
+        this.context.addTask(task);
     }
     
     renderRow(name: Interview) {
         return (
             <Pressable style={({pressed}) => [
                     styles.button, styles.width300,
-                    pressed ? styles.buttonBackgroundClick : styles.buttonBackground]}
+                    pressed ? styles.buttonBackgroundClick : (this.context.addedInterview ? styles.buttonBackgroundDisable : styles.buttonBackground)]}
+                    disabled={this.context.addedInterview}
                     onPress={() => this.addMetric(name)}>
                 <Text style={styles.buttonTextName}>{name}</Text>
-                <Text style={styles.buttonTextCount}>{this.interview[name]}$</Text>
+                <Text style={styles.buttonTextCount}>{InterviewTask.prices[name]}$</Text>
+                <Text style={styles.buttonTextCount}>2</Text>
+                <Text style={styles.width30}>{this.context.addedInterview ? '✓' : ''}</Text>
             </Pressable>
         )
     }
@@ -39,6 +38,7 @@ class Interviews extends Component {
             <View style={styles.container}>
                 <View style={styles.header}>
                     <Text style={styles.standartText}>Спринт №{this.context.sprint}</Text>
+                    <Text style={styles.standartText}>Пользователи: {this.context.userStatistics[this.context.userStatistics.length - 1] * 100}</Text>
                     <Text style={styles.standartText}>{this.context.money}$</Text>
                 </View>
                 <View style={styles.sectionContainer}>
@@ -47,6 +47,8 @@ class Interviews extends Component {
                     <View style={styles.titles}>
                         <Text style={styles.buttonTextName}></Text>
                         <Text style={styles.buttonTextCount}>Цена</Text>
+                        <Text style={styles.buttonTextCount}>sp</Text>
+                        <Text style={styles.width30}></Text>
                     </View>
                     {this.renderRow(Interview.STANDARD)}
                 </View>

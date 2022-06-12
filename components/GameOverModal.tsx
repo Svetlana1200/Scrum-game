@@ -26,7 +26,7 @@ export class GameOverModal extends Component<IProps> {
                     <View style={styles.modalView}>
                         <Text style={styles.sectionTitle}>Игра окончена</Text>
                         <Text style={styles.standartText}>
-                            Максимальное колчество пользователей: {Math.max.apply(null, this.context.userStatistics)}
+                            Максимальное колчество пользователей: {Math.max.apply(null, this.context.userStatistics) * 100}
                         </Text>
                         <Text style={styles.standartText}>
                             Спринтов: {this.context.sprint}

@@ -1,4 +1,4 @@
-import {StyleSheet, Dimensions} from 'react-native';
+import {StyleSheet} from 'react-native';
 import React from 'react';
 export const Context = React.createContext();
 
@@ -155,7 +155,7 @@ const styles = StyleSheet.create( {
         marginBottom: 20
     },
     headerScreen: {
-        width: Dimensions.get("window").width - 100,
+        width: '100%',
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: "center",
@@ -168,8 +168,7 @@ const styles = StyleSheet.create( {
         alignItems: 'center',
         justifyContent: 'space-around',
         height: 34,
-        padding: 5,
-        width: 80
+        padding: 5
     },
     headerAddingTasks: {
         flexDirection: 'row',

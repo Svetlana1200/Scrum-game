@@ -13,7 +13,6 @@ import styles, {Context} from '../helpers/consts'
 import {Role, Status} from '../helpers/Roles'
 import { AdvertisingTask, BaseTask, MetricTask, SimpleTask, results, features } from '../helpers/Tasks';
 import { AddingTask } from './AddingTask';
-import GameOverModal from './GameOverModal';
 
 interface IProps {
     navigation: {
@@ -36,17 +35,6 @@ class Tasks extends Component<IProps, IState> {
         }
     }
 
-    toResults = (task: BaseTask) => {
-        if (task instanceof SimpleTask) {
-            this.props.navigation.navigate('SimpleResults', {task: task})
-        }
-        else if (task instanceof MetricTask) {
-            this.props.navigation.navigate('MetricResults', {task: task})
-        }
-        else if (task instanceof AdvertisingTask) {
-            this.props.navigation.navigate('AdvertisingResults', {task: task})
-        }
-    }
 
     addAndRemoveToSprint(task: BaseTask) {
         if (task.inCurrentSprint) {
@@ -75,7 +63,6 @@ class Tasks extends Component<IProps, IState> {
                 <Text style={[styles.standartText, styles.width]}>{task.description}</Text>
                 <Text style={[styles.standartText, styles.width50]}>{task.status}</Text>
                 <Text style={[styles.standartText, styles.width30]}>{this._getSP(task)}</Text>
-                <Text style={[styles.standartText, styles.width50]}>{task.status === Status.COMPLETED ? task?.profitUsers || '-' : '-'}</Text>
                 {
                     task.status !== Status.COMPLETED &&
                         <Pressable style={({pressed}) => [
@@ -104,10 +91,9 @@ class Tasks extends Component<IProps, IState> {
                     <Text style={[styles.standartText, styles.width50]}>Статус</Text>
                     <Text style={[styles.standartText, styles.width30]}>sp</Text>
                     <View>
-                        <Text style={[styles.standartText, styles.width50]}>нов.</Text>
-                        <Text style={[styles.standartText, styles.width50]}>польз.</Text>
+                        <Text style={[styles.standartText, styles.width90]}>Добавить</Text>
+                        <Text style={[styles.standartText, styles.width90]}>в спринт</Text>
                     </View>
-                    <Text style={[styles.standartText, styles.width30]}></Text>
                 </View>
                 {this.context.taskManager.tasks.map((task: BaseTask) => this.renderTask(task))}
             </ScrollView>
@@ -115,15 +101,18 @@ class Tasks extends Component<IProps, IState> {
     }
 
     render() {
+        const {sp, money} = this.context.taskManager.getAddedResources()
+
         return (
             <View style={styles.container}>
-                <GameOverModal navigation={this.props.navigation}/>
                 <View style={styles.header}>
                     <Text style={styles.standartText}>Спринт №{this.context.sprint}</Text>
+                    <Text style={styles.standartText}>Пользователи: {this.context.userStatistics[this.context.userStatistics.length - 1] * 100}</Text>
                     <Text style={styles.standartText}>{this.context.money}$</Text>
                 </View>    
                 <View style={styles.sectionContainer}>
                     <AddingTask closeModal={() => this.setState({modalVisible: false})} modalVisible={this.state.modalVisible}/>
+                    <Text style={styles.standartText}>Производительность команды 10 sp. В задачах указано измеренное кол-во sp, оно может отличаться от реального.</Text>
                     <Pressable style={({pressed}) => [
                                     styles.button, styles.width300,
                                     pressed ? styles.buttonBackgroundClick : styles.buttonBackground]}
@@ -142,7 +131,8 @@ class Tasks extends Component<IProps, IState> {
                                 onPress={() => this.setState({modalVisible: true})}>
                         <Text style={styles.buttonText}>Добавить задачу</Text>
                     </Pressable>
-                    <Text style={styles.standartText}>Добавлено на {this.context.taskManager.getAddedSP()} sp</Text> 
+                    <Text style={styles.standartText}>Добавлено на {sp} sp</Text> 
+                    <Text style={styles.standartText}>Будет потрачено {this.context.sprintCost + money}$</Text> 
                     {this.renderTasks()}
                 </View>
             </View>

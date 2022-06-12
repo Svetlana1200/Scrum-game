@@ -31,15 +31,24 @@ export class TaskManager {
         })
         this.nextSprintTasks.splice(i, 1)
     }
-    getAddedSP() {
+    getAddedResources() {
         let addedSP = 0;
+        let addedMoney = 0;
         this.nextSprintTasks.forEach((task) => {
             if (task.status === Status.STARTED && task instanceof SimpleTask)
                 addedSP += Math.ceil(task.measuredCost / 2)
             else
                 addedSP += task.measuredCost
+            if (task instanceof MetricTask)
+                addedMoney += MetricTask.prices[task.name]
+            else if (task instanceof InterviewTask)
+                addedMoney += InterviewTask.prices[task.name]
+            else if (task instanceof AdvertisingTask && task.status === Status.NEW) {
+                addedMoney += AdvertisingTask.advertising[task.size].price
+            }
+            
         })
-        return addedSP
+        return {sp: addedSP, money: addedMoney}
     }
     // выполнить спринта
     executeSprint() {
@@ -54,6 +63,15 @@ export class TaskManager {
         let RR = false;
         let countNewResults = 0;
         let countNewFeatures = 0;
+        let cost = 0;
+        let addedTaskFlags = {
+            addedMetricARPU: false,
+            addedMetricRR: false,
+            addedInterview: false,
+            addedAdvertisingBig: false,
+            addedAdvertisingMedium: false,
+            addedAdvertisingLittle: false
+        }
 
         while (sp > 0 && i < this.prevSprintTasks.length) {
             const task = this.prevSprintTasks[i];
@@ -62,13 +80,15 @@ export class TaskManager {
             else
                 sp -= task.realCost
             if (task instanceof SimpleTask) {
-                if (Math.floor(Math.random() * 100) + 1 < task.probabilityCompletion) {
+                if (sp > 0 && Math.floor(Math.random() * 100) + 1 < task.probabilityCompletion) {
                     task.status = Status.COMPLETED;
                     diffProfitARPU += task.profitARPU;
                     diffProfitUsers += task.profitUsers;
                 }
-                else
-                    task.status = Status.STARTED
+                else {
+                    task.status = Status.STARTED;
+                    diffProfitUsers -= 1;
+                }
                 task.inCurrentSprint = false
             }
             else if (task instanceof MetricTask) {
@@ -78,12 +98,14 @@ export class TaskManager {
                 else if (task.name === Metric.RR) 
                     RR = true
                 task.inCurrentSprint = false
+                cost += MetricTask.prices[task.name]
             }
             else if (task instanceof InterviewTask) {
                 task.status = Status.COMPLETED;
                 countNewResults = task.countNewResults
                 countNewFeatures = task.countNewFeatures
                 task.inCurrentSprint = false
+                cost += InterviewTask.prices[task.name]
             }
             else if (task instanceof AdvertisingTask) {
                 task.estimatingSprint --;
@@ -95,6 +117,7 @@ export class TaskManager {
                     task.status = Status.COMPLETED;
                     task.inCurrentSprint = false;
                     diffProfitUsers += task.profitUsers;
+                    cost += AdvertisingTask.advertising[task.size].price
                 }
             }
             i++
@@ -104,12 +127,37 @@ export class TaskManager {
             this.prevSprintTasks[i].inCurrentSprint = false
         }
 
+        for (let i = 0; i < this.tasks.length; i++) {
+            const task = this.tasks[i]
+            if (task.status !== Status.COMPLETED) {
+                if (task instanceof MetricTask) {
+                    if (task.name === Metric.ARPU) 
+                        addedTaskFlags.addedMetricARPU = true
+                    else if (task.name === Metric.RR) 
+                        addedTaskFlags.addedMetricRR = true
+                }
+                if (task instanceof AdvertisingTask) {
+                    if (task.size === Advertising.BIG) 
+                        addedTaskFlags.addedAdvertisingBig = true
+                    else if (task.size === Advertising.MEDIUM) 
+                        addedTaskFlags.addedAdvertisingMedium = true
+                    else if (task.size === Advertising.LITTLE) 
+                        addedTaskFlags.addedAdvertisingLittle = true
+                }
+                if (task instanceof InterviewTask) {
+                    addedTaskFlags.addedInterview = true
+                }
+            }
+        }
+
         return {
             diffProfitARPU: addARPU ? diffProfitARPU : 0,
             diffProfitUsers: diffProfitUsers,
             RR: RR,
             countNewResults: countNewResults,
-            countNewFeatures: countNewFeatures
+            countNewFeatures: countNewFeatures,
+            cost: cost,
+            addedTaskFlags: addedTaskFlags
         }
     }
 }

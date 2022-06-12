@@ -1,8 +1,8 @@
-import React, {Component} from 'react';
+import React from 'react';
 import {
     Pressable,
-  Text,
-  View
+    Text,
+    View
 } from 'react-native';
 import styles, {Context} from '../helpers/consts'
 
@@ -16,6 +16,18 @@ export class Header extends React.Component<IProps> {
         return (
             <View style={[styles.headerScreen]}>
                 <Text style={styles.headerTitle}>{this.props.title}</Text>
+                {
+                    !this.props.hideMenu &&
+                    <Pressable style={({pressed}) => [
+                                        styles.headerButton,
+                                        pressed ? styles.buttonBackgroundClick : styles.buttonBackground
+                                    ]}
+                                onPress={() => {
+                                    this.context.changeVisible(true)
+                                }}>
+                        <Text style={styles.headerTitle}>Правила</Text>
+                    </Pressable>
+                }
             </View>
         )
     }

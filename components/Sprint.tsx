@@ -50,6 +50,7 @@ export class Sprint extends React.Component<IProps> {
             <View style={styles.container}>
                 <View style={styles.header}>
                     <Text style={styles.standartText}>Спринт №{this.context.sprint}</Text>
+                    <Text style={styles.standartText}>Пользователи: {this.context.userStatistics[this.context.userStatistics.length - 1] * 100}</Text>
                     <Text style={styles.standartText}>{this.context.money}$</Text>
                 </View>
                 <ScrollView>

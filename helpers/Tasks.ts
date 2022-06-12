@@ -1,11 +1,5 @@
 import { Advertising, Interview, Metric, Role, Status } from "./Roles";
 
-interface Task {
-    id: number;
-    isFinish?: boolean;
-    description: string;
-}
-
 export class Feature {
     description: string;
     validRole: Role;
@@ -14,6 +8,7 @@ export class Feature {
     profitARPU: number;
 
     constructor(description: string, validRole: Role, cost: number, profitUsers: number, profitARPU: number) {
+        console.log(description, validRole)
         this.description = description;
         this.validRole = validRole;
         this.cost = cost;
@@ -40,7 +35,7 @@ export class Result {
 export const features: {[key: string]: Feature} = {
     'кнопку загрузки музыки': new Feature('кнопку загрузки музыки', Role.AUTHOR, 1, 1, 1),
     'кнопку паузы': new Feature('кнопку паузы', Role.LISTENER, 1, 1, 1),
-    'кнопку прогресс бар': new Feature('кнопку прогресс бар', Role.AUTHOR, 1, 1, 1),
+    'прогресс бар': new Feature('прогресс бар', Role.AUTHOR, 1, 1, 1),
     'сортировку песен': new Feature('сортировку песен', Role.LISTENER, 1, 1, 1),
     'загружать подкасты': new Feature('загружать подкасты', Role.AUTHOR, 1, 1, 1),
     'историю прослушиваний': new Feature('историю прослушиваний', Role.LISTENER, 1, 1, 1),
@@ -52,7 +47,7 @@ export const features: {[key: string]: Feature} = {
 export const results: {[key: string]: Result} = {
     'загружать музыку': new Result('загружать музыку', features['кнопку загрузки музыки'], 1, 1, 1),
     'останавливать прослушивание музыки': new Result('останавливать прослушивание музыки', features['кнопку паузы'], 1, 1, 1),
-    'видеть сколько будет загружаться песня': new Result('видеть сколько будет загружаться песня', features['кнопку прогресс бар'], 1, 1, 1),
+    'видеть сколько будет загружаться песня': new Result('видеть сколько будет загружаться песня', features['прогресс бар'], 1, 1, 1),
     'было быстрее проверять контент': new Result('было быстрее проверять контент', features['ускорять запись'], 1, 1, 1),
     'иметь дополнительную прибыль': new Result('иметь дополнительную прибыль', features['загружать подкасты'], 1, 1, 1),
     'смотреть, что слушал вчера': new Result('смотреть, что слушал вчера', features['историю прослушиваний'], 1, 1, 1),
@@ -62,17 +57,18 @@ export const results: {[key: string]: Result} = {
 }
 
 
-export class BaseTask implements Task {
+export class BaseTask {
     status: Status = Status.NEW
     id: number;
     realCost: number;
     measuredCost: number;
     probabilityCompletion: number;
-    isFinish?: boolean;
     inCurrentSprint: boolean = false;
     canRemove: boolean;
 
-    constructor(id: number, realCost: number, measuredCost: number, probabilityCompletion: number, canRemove: boolean = true) {
+    constructor(id: number, realCost: number,
+                measuredCost: number, probabilityCompletion: number,
+                canRemove: boolean = true) {
         this.id = id;
         this.realCost = realCost;
         this.measuredCost = measuredCost;
@@ -132,6 +128,10 @@ export class SimpleTask extends BaseTask {
 }
 
 export class MetricTask extends BaseTask {
+    static prices = {
+        [Metric.ARPU]: 100,
+        [Metric.RR]: 150
+    }
     name: Metric;
     
     constructor(id: number, name: Metric) {
@@ -145,6 +145,11 @@ export class MetricTask extends BaseTask {
 }
 
 export class AdvertisingTask extends BaseTask {
+    static advertising = {
+        [Advertising.LITTLE]: {time: 1, price: 100},
+        [Advertising.MEDIUM]: {time: 2, price: 200},
+        [Advertising.BIG]: {time: 3, price: 400}
+    }
     static countSprints = {
         [Advertising.BIG]: 3,
         [Advertising.MEDIUM]: 2,
@@ -172,9 +177,12 @@ export class AdvertisingTask extends BaseTask {
 }
 
 export class InterviewTask extends BaseTask {
+    static prices = {
+        [Interview.STANDARD]: 100
+    }
     name: Interview;
-    countNewResults: number = Math.floor(Math.random() * 2) + 1
-    countNewFeatures: number = Math.floor(Math.random() * 2) + 1
+    countNewResults: number = Math.floor(Math.random() * 2) + 2
+    countNewFeatures: number = Math.floor(Math.random() * 2) + 2
 
     constructor(id: number, name: Interview) {
         super(id, 2, 2, 100)

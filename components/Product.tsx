@@ -14,15 +14,6 @@ interface IProps {
 }
 
 export class Product extends React.Component<IProps> {
-    renderRow(text1: string, text2: string) {
-        return (
-        <View style={[styles.row, styles.offset]}>
-            <Text style={[styles.standartText, styles.width120]}>{text1}</Text>
-            <Text style={[styles.standartText, styles.width90]}>{text2}</Text>
-        </View>
-        )
-    }
-
     render() {
         const sprints = [];
         for (let i = 0; i < this.context.sprint; i++) {
@@ -32,15 +23,16 @@ export class Product extends React.Component<IProps> {
             <View style={styles.container}>
                 <View style={styles.header}>
                     <Text style={styles.standartText}>Спринт №{this.context.sprint}</Text>
+                    <Text style={styles.standartText}>Пользователи: {this.context.userStatistics[this.context.userStatistics.length - 1] * 100}</Text>
                     <Text style={styles.standartText}>{this.context.money}$</Text>
                 </View>
                 <ScrollView>
-                    <View style={styles.sectionContainer}>
-                        {this.renderRow('Пользователи', this.context.userStatistics.slice(-1))}
-                    </View>
                     <View>
-                        <UserStatistic numberSprints={sprints} values={this.context.userStatistics}/>
+                        <Text style={[styles.standartText]}>График изменения кол-ва пользователей</Text>
+                        <UserStatistic numberSprints={sprints} values={this.context.userStatistics.map(value => value * 100)}/>
+                        <Text style={[styles.standartText]}>График метрики ARPU. Для обновления данных необходимо составить метрику ARPU</Text>
                         <UserStatistic numberSprints={sprints} values={this.context.ARPUStatistics}/>
+                        <Text style={[styles.standartText]}>График метрики Retation rate. Для обновления данных необходимо составить метрику Retation rate</Text>
                         <UserStatistic numberSprints={sprints} values={this.context.RRStatistics}/>
                     </View>
                 </ScrollView>
